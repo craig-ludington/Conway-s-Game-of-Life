@@ -1,0 +1,26 @@
+# conway
+
+A functional version of Conway's Game of Life for an infinite board.
+
+## Usage
+Define a world as a set of coordinates, where each coordinate is a vector of two integers.
+Pass that world as a parameter to new-world.
+A new world will be returned.
+Repeat forever.
+
+Example:
+   (new-world #{ [-1 0] [0 0] [1 0] })
+   => #{[0 -1] [0 0] [0 1]}
+
+
+
+
+## Installation
+
+Works under Leiningen.
+
+## License
+
+Copyright (C) 2011 Craig Ludington
+
+Distributed under the Eclipse Public License, the same as Clojure.
