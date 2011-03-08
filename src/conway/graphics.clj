@@ -37,6 +37,25 @@
 	     (recur (new-world w) (+ i 1))))
     (.dispose frame)))
 
+(defn run-fast
+  "Run without sleeping.  Return the final world and the frame in a vector."
+  [world iterations size scale]
+  (let [frame (make-frame size size)
+	gfx (.getGraphics frame)]
+    (loop [w world i 0]
+      (if (< i iterations)
+	(do (clear gfx size size)
+	    (draw-world gfx w scale)
+	    (recur (new-world w) (+ i 1)))
+	[w frame]))))
+
+(defn run-real-fast
+  [world iterations size scale]
+  (loop [w world i 0]
+    (if (< i iterations)
+      (recur (new-world w) (+ i 1))
+      w)))
+
 (def
  ^{:doc
    "The glider pattern has been proposed as the hacker emblem.
@@ -52,7 +71,7 @@
 
 ;; Goran's collection
 (def *f-pentomino* #{ [5,5],[5,6],[4,6],[6,6], [4,7] } )
-(def *acron* #{[3 5] [5 6] [3 6] [4 8] [5 9] [5 10] [5 11]})
+(def *acorn* #{[3 5] [5 6] [3 6] [4 8] [5 9] [5 10] [5 11]})
 (def *die-hard* #{[5 5] [5 6] [4 5] [4 6]  [4 10] [4 12] [6 11] [5 11]})
 (def *lightweight-spaceship* #{[5 5] [5 6] [5 7] [5 8] [4 8] [3 8] [2 7] [4 4] [2 4]})
 (def *blinker* #{[3 3] [3 4] [3 5]})
