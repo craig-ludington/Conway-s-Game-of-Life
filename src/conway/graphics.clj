@@ -2,6 +2,7 @@
     #^{:author "Craig Ludington",
        :doc "Graphics for the Conway's Game of Life."}
   conway.graphics
+  (require [clojure.contrib.math :as math])
   (use [conway.core :only (new-world)]
        [clojure.contrib.repl-utils :only (show apropos)]))
 
@@ -81,13 +82,89 @@
   [world units]
   (set (map (fn [[x y]] [(+ x units) (+ y units) ]) world)))
 
+;; 327.4995 - This looks slow, and it is.
+(defn bounding-box-a
+  [world]
+  {:pre [(seq world)
+	 (every? vector? world)
+	 (every? #(= 2 (count %)) world)
+	 (every? (fn [[x y]] (and (integer? x)
+				  (integer? y)))
+		 world)]}
+  (let [x #(% 0)
+	y #(% 1)
+	b (fn boundary [aggregator selector] (apply aggregator (map selector world)))]
+    [[(b min x) (b min y)] [(b max x) (b max y)]]))
 
-(let [x (fn x [a] (a 0))
-      y (fn y [a] (a 1))
-      b (fn boundary [world f selector] (apply f (map selector world)))]
-  (defn max-x [w] (b w max x))
-  (defn max-y [w] (b w max y))
-  (defn min-x [w] (b w min x))
-  (defn min-y [w] (b w min y))
-  (defn bounding-rectangle [w] [[(min-x w) (min-y w)] [(max-x w) (max-y w)]]))
+;; 133.3799 - Less than half the time of bounding-box-a
+(defn bounding-box-b
+  [world]
+  {:pre [(seq world)
+	 (every? vector? world)
+	 (every? #(= 2 (count %)) world)
+	 (every? (fn [[x y]] (and (integer? x)
+				  (integer? y)))
+		 world)]}
+  (loop [w world
+	 max-x 0
+	 max-y 0
+	 min-x 0
+	 min-y 0]
+    (if (seq w)
+      (let [[x y] (first w)]
+	(recur (rest w)
+	       (max x max-x)
+	       (max y max-y)
+	       (min x min-x)
+	       (min y min-y)))
+      [[min-x min-y] [max-x max-y]])))
 
+;; 204.4963  - Much slower than bounding-box-b ... type hints are the only difference
+(defn bounding-box-c
+  [world]
+  {:pre [(seq world)
+	 (every? vector? world)
+	 (every? #(= 2 (count %)) world)
+	 (every? (fn [[x y]] (and (integer? x)
+				  (integer? y)))
+		 world)]}
+  (loop [w world
+	 ^Integer max-x 0
+	 ^Integer max-y 0
+	 ^Integer min-x 0
+	 ^Integer min-y 0]
+    (if (seq w)
+      (let [[^Integer x
+	     ^Integer y] (first w)]
+	(recur (rest w)
+	       (max ^Integer x ^Integer max-x)
+	       (max ^Integer y ^Integer max-y)
+	       (min ^Integer x ^Integer min-x)
+	       (min ^Integer y ^Integer min-y)))
+      [[min-x min-y] [max-x max-y]])))
+
+(defn bounding-box-d
+  [world]
+  {:pre [(seq world)
+	 (every? vector? world)
+	 (every? #(= 2 (count %)) world)
+	 (every? (fn [[x y]] (and (integer? x)
+				  (integer? y)))
+		 world)]}
+  (loop [w world
+	 max-x (int 0)
+	 max-y (int 0)
+	 min-x (int 0)
+	 min-y (int 0)]
+    (if (seq w)
+      (let [[x y] (first w)]
+	(let [x (int x) y (int y)]
+	  (recur (rest w)
+		 (int (max x max-x)) 
+		 (int (max y max-y))
+		 (int (min x min-x))
+		 (int (min y min-y)))))
+      [[min-x min-y] [max-x max-y]])))
+
+(defn random-coord [max] [(math/round (rand max)) (math/round (rand max))])
+(defn random-world [size max] (set (take size (repeatedly (partial random-coord max)))))
